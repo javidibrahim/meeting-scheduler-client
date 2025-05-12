@@ -1,5 +1,5 @@
 // API configuration
-const API_BASE_URL = 'https://meeting-scheduler-server.vercel.app';  // Backend URL
+const API_BASE_URL = 'https://meeting-scheduler-server.onrender.com';  // Backend URL
 const FRONTEND_URL = 'https://meeting-scheduler-client-delta.vercel.app';  // Frontend URL
 
 export const API_ENDPOINTS = {
