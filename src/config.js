@@ -1,5 +1,6 @@
 // API configuration
-const API_BASE_URL = 'http://localhost:8000';  // Backend URL
+const API_BASE_URL = 'https://meeting-scheduler-server.vercel.app';  // Backend URL
+const FRONTEND_URL = 'https://meeting-scheduler-client-delta.vercel.app';  // Frontend URL
 
 export const API_ENDPOINTS = {
     // Auth endpoints
@@ -34,8 +35,8 @@ export const API_ENDPOINTS = {
 };
 
 const config = {
-  apiBaseUrl: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000',
-  frontendUrl: process.env.REACT_APP_FRONTEND_URL || 'http://localhost:5179',
+  apiBaseUrl: process.env.REACT_APP_API_BASE_URL || API_BASE_URL,
+  frontendUrl: process.env.REACT_APP_FRONTEND_URL || FRONTEND_URL,
 };
 
 export default config; 
