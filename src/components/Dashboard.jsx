@@ -12,7 +12,7 @@ import ScheduledMeetings from './ScheduledMeetings';
 
 
 const Dashboard = () => {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, refreshAuth } = useAuth();
   const navigate = useNavigate();
   const [connectedCalendars, setConnectedCalendars] = useState([]);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -85,19 +85,34 @@ const Dashboard = () => {
     }
   }, [connectedCalendars]);
 
+  // Check authentication on mount and when URL changes
   useEffect(() => {
-    if (!loading && !user) {
-      navigate('/');
-    }
-  }, [user, loading, navigate]);
+    const checkAuth = async () => {
+      if (!loading && !user) {
+        console.log('No user found, redirecting to login'); // Debug log
+        navigate('/');
+        return;
+      }
+      
+      // Try to refresh auth state
+      const isAuthenticated = await refreshAuth();
+      if (!isAuthenticated) {
+        console.log('Auth refresh failed, redirecting to login'); // Debug log
+        navigate('/');
+      }
+    };
+    
+    checkAuth();
+  }, [user, loading, navigate, refreshAuth]);
 
+  // Handle URL parameters
   useEffect(() => {
-    // Check for success or error in URL params
     const params = new URLSearchParams(window.location.search);
     const errorMessage = params.get('error');
     const successMessage = params.get('success');
     
     if (errorMessage) {
+      console.log('Error in URL params:', errorMessage); // Debug log
       setError(params.get('message') || 'An error occurred');
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -105,13 +120,10 @@ const Dashboard = () => {
     
     if (successMessage === 'hubspot_connected') {
       setSuccess('HubSpot connected successfully!');
-      // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (successMessage === 'true') {
       setSuccess('Calendar connected successfully!');
-      // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
-      // Refresh calendar list
       fetchCalendars();
     }
   }, [fetchCalendars]);
