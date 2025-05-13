@@ -1,5 +1,5 @@
 const FRONTEND_URL = "https://meeting-scheduler-client-delta.vercel.app";
-const API_BASE_URL="https://meeting-scheduler-server.onrender.com";
+const API_BASE_URL="https://meeting-scheduler-server.fly.dev";
 
 export const API_ENDPOINTS = {
     // Auth endpoints
