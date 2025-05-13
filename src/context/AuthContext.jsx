@@ -21,6 +21,10 @@ api.interceptors.request.use(request => {
   console.log('Request withCredentials:', request.withCredentials);
   console.log('Current cookies:', document.cookie);
   console.log('Cookie attributes:', document.cookie.split(';').map(c => c.trim()));
+  
+  // Ensure withCredentials is set for all requests
+  request.withCredentials = true;
+  
   return request;
 });
 
@@ -31,6 +35,19 @@ api.interceptors.response.use(
     console.log('Response headers:', response.headers);
     console.log('Set-Cookie header:', response.headers['set-cookie']);
     console.log('Current cookies after response:', document.cookie);
+    
+    // Check if we got a session cookie
+    const setCookieHeader = response.headers['set-cookie'];
+    if (setCookieHeader) {
+      console.log('Session cookie received:', setCookieHeader);
+      // Verify cookie attributes
+      const cookieParts = setCookieHeader.split(';').map(p => p.trim());
+      console.log('Cookie parts:', cookieParts);
+      console.log('Has SameSite=None:', cookieParts.some(p => p === 'SameSite=None'));
+      console.log('Has Secure:', cookieParts.some(p => p === 'Secure'));
+      console.log('Has Domain:', cookieParts.find(p => p.startsWith('Domain=')));
+    }
+    
     return response;
   },
   error => {
@@ -44,6 +61,14 @@ api.interceptors.response.use(
       setCookieHeader: error.response?.headers?.['set-cookie'],
       error: error.message
     });
+    
+    // If we get a 401, try to refresh the session
+    if (error.response?.status === 401) {
+      console.log('Received 401, attempting to refresh session...');
+      // Clear any existing session data
+      setUser(null);
+    }
+    
     return Promise.reject(error);
   }
 );
