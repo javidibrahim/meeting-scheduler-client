@@ -19,6 +19,8 @@ api.interceptors.request.use(request => {
   console.log('Making request to:', request.url);
   console.log('Request headers:', request.headers);
   console.log('Request withCredentials:', request.withCredentials);
+  console.log('Current cookies:', document.cookie);
+  console.log('Cookie attributes:', document.cookie.split(';').map(c => c.trim()));
   return request;
 });
 
@@ -27,7 +29,8 @@ api.interceptors.response.use(
   response => {
     console.log('Response received:', response.status);
     console.log('Response headers:', response.headers);
-    console.log('Response cookies:', document.cookie);
+    console.log('Set-Cookie header:', response.headers['set-cookie']);
+    console.log('Current cookies after response:', document.cookie);
     return response;
   },
   error => {
@@ -37,6 +40,8 @@ api.interceptors.response.use(
       statusText: error.response?.statusText,
       headers: error.response?.headers,
       cookies: document.cookie,
+      cookieAttributes: document.cookie.split(';').map(c => c.trim()),
+      setCookieHeader: error.response?.headers?.['set-cookie'],
       error: error.message
     });
     return Promise.reject(error);
@@ -54,10 +59,12 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         console.log('Checking auth status...');
         console.log('Current cookies:', document.cookie);
+        console.log('Cookie attributes:', document.cookie.split(';').map(c => c.trim()));
         console.log('API base URL:', config.apiBaseUrl);
         
         const response = await api.get('/me');
         console.log('Auth check successful:', response.data);
+        console.log('Cookies after auth check:', document.cookie);
         setUser(response.data);
       } catch (error) {
         console.error('Auth check failed:', {
@@ -65,6 +72,8 @@ export const AuthProvider = ({ children }) => {
           status: error.response?.status,
           data: error.response?.data,
           cookies: document.cookie,
+          cookieAttributes: document.cookie.split(';').map(c => c.trim()),
+          setCookieHeader: error.response?.headers?.['set-cookie'],
           url: error.config?.url
         });
         setUser(null);
