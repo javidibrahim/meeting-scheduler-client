@@ -18,49 +18,21 @@ const Dashboard = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [isLoadingCalendars, setIsLoadingCalendars] = useState(true);
+  const [isLoadingCalendars, setIsLoadingCalendars] = useState(false);
   const [events, setEvents] = useState([]);
-  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
   const [isScheduleLinksModalOpen, setIsScheduleLinksModalOpen] = useState(false);
   const [isScheduledMeetingsModalOpen, setIsScheduledMeetingsModalOpen] = useState(false);
 
-
-  const fetchCalendars = useCallback(async () => {
-    try {
-      setIsLoadingCalendars(true);
-      const response = await fetch(API_ENDPOINTS.CALENDAR_LIST, {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const calendars = await response.json();
-        setConnectedCalendars(calendars);
-        // Fetch events after calendars are updated
-        if (calendars.length > 0) {
-          await fetchEvents(calendars);
-        }
-      } else {
-        console.error('Failed to fetch calendars');
-        setError('Failed to load calendars');
-      }
-    } catch (err) {
-      console.error('Failed to fetch calendars:', err);
-      setError('Failed to load calendars');
-    } finally {
-      setIsLoadingCalendars(false);
+  // Memoize the fetch functions to prevent recreation on every render
+  const fetchEvents = useCallback(async (calendars) => {
+    if (!calendars?.length || isLoadingEvents) {
+      return;
     }
-  }, []);
 
-  const fetchEvents = useCallback(async (calendars = connectedCalendars) => {
     try {
       setIsLoadingEvents(true);
-      setEvents([]);
-      
-      if (calendars.length === 0) {
-        return;
-      }
-
-      // Fetch events from all connected calendars
       const eventPromises = calendars.map(calendar => 
         fetch(API_ENDPOINTS.EVENTS(calendar.id), {
           credentials: 'include'
@@ -74,36 +46,93 @@ const Dashboard = () => {
       );
 
       const eventsResults = await Promise.all(eventPromises);
-      // Flatten all events into a single array
-      const allEvents = eventsResults.flat();
-      setEvents(allEvents);
+      setEvents(eventsResults.flat());
     } catch (err) {
       console.error('Failed to fetch events:', err);
       setError('Failed to load calendar events');
     } finally {
       setIsLoadingEvents(false);
     }
-  }, [connectedCalendars]);
+  }, []); // No dependencies needed as we pass calendars as parameter
 
-  // Check authentication on mount and when URL changes
+  const fetchCalendars = useCallback(async () => {
+    if (isLoadingCalendars) {
+      return;
+    }
+
+    try {
+      setIsLoadingCalendars(true);
+      const response = await fetch(API_ENDPOINTS.CALENDAR_LIST, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch calendars');
+      }
+
+      const calendars = await response.json();
+      setConnectedCalendars(calendars);
+      
+      // Only fetch events if we have calendars
+      if (calendars.length > 0) {
+        await fetchEvents(calendars);
+      } else {
+        setEvents([]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch calendars:', err);
+      setError('Failed to load calendars');
+      setEvents([]);
+    } finally {
+      setIsLoadingCalendars(false);
+    }
+  }, [fetchEvents]); // Only depends on fetchEvents
+
+  // Initial data fetch
   useEffect(() => {
+    let mounted = true;
+
+    const loadData = async () => {
+      if (!mounted) return;
+      await fetchCalendars();
+    };
+
+    loadData();
+
+    return () => {
+      mounted = false;
+    };
+  }, []); // Empty dependency array - only run on mount
+
+  // Check authentication on mount only
+  useEffect(() => {
+    let mounted = true;
+
     const checkAuth = async () => {
+      if (!mounted) return;
+
       if (!loading && !user) {
-        console.log('No user found, redirecting to login'); // Debug log
+        console.log('No user found, redirecting to login');
         navigate('/');
         return;
       }
       
-      // Try to refresh auth state
-      const isAuthenticated = await refreshAuth();
-      if (!isAuthenticated) {
-        console.log('Auth refresh failed, redirecting to login'); // Debug log
-        navigate('/');
+      // Only try to refresh auth if we don't have a user
+      if (!user) {
+        const isAuthenticated = await refreshAuth();
+        if (!isAuthenticated && mounted) {
+          console.log('Auth refresh failed, redirecting to login');
+          navigate('/');
+        }
       }
     };
     
     checkAuth();
-  }, [user, loading, navigate, refreshAuth]);
+
+    return () => {
+      mounted = false;
+    };
+  }, []); // Only run on mount
 
   // Handle URL parameters
   useEffect(() => {
@@ -126,11 +155,7 @@ const Dashboard = () => {
       window.history.replaceState({}, document.title, window.location.pathname);
       fetchCalendars();
     }
-  }, [fetchCalendars]);
-
-  useEffect(() => {
-    fetchCalendars();
-  }, [fetchCalendars]);
+  }, []); // Empty dependency array - only run on mount
 
   const handleConnectCalendar = () => {
     setIsConnecting(true);
@@ -151,18 +176,23 @@ const Dashboard = () => {
       });
       
       if (response.ok) {
-        setConnectedCalendars(prev => prev.filter(cal => cal.id !== calendarId));
+        const updatedCalendars = connectedCalendars.filter(cal => cal.id !== calendarId);
+        setConnectedCalendars(updatedCalendars);
         setSuccess('Calendar disconnected successfully');
-        // Refresh events after disconnecting
-        await fetchEvents();
+        
+        // Update events based on remaining calendars
+        if (updatedCalendars.length > 0) {
+          await fetchEvents(updatedCalendars);
+        } else {
+          setEvents([]);
+        }
       } else {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Failed to disconnect calendar:', errorData);
-        setError(errorData.detail || 'Failed to disconnect calendar');
+        throw new Error(errorData.detail || 'Failed to disconnect calendar');
       }
     } catch (err) {
       console.error('Error disconnecting calendar:', err);
-      setError('Failed to disconnect calendar');
+      setError(err.message || 'Failed to disconnect calendar');
     }
   };
 

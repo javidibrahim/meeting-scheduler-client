@@ -1,5 +1,8 @@
-const FRONTEND_URL = "https://meeting-scheduler-client-delta.vercel.app";
-const API_BASE_URL="https://meeting-scheduler-server.fly.dev";
+// Get URLs from environment variables
+const FRONTEND_URL = process.env.REACT_APP_FRONTEND_URL;
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+console.log("FRONT END URL", FRONTEND_URL, "API BASE URL", API_BASE_URL);
+
 
 export const API_ENDPOINTS = {
     // Auth endpoints
@@ -25,7 +28,7 @@ export const API_ENDPOINTS = {
     // Schedule Links endpoints
     SCHEDULE_LINKS: `${API_BASE_URL}/schedule-links`,
     
-    // Public Scheduling endpoints - no /schedule in the path
+    // Public Scheduling endpoints
     PUBLIC_SCHEDULE: `${API_BASE_URL}/public`,
     
     // Meetings endpoints
@@ -34,8 +37,8 @@ export const API_ENDPOINTS = {
 };
 
 const config = {
-  apiBaseUrl: process.env.REACT_APP_API_BASE_URL || API_BASE_URL,
-  frontendUrl: process.env.REACT_APP_FRONTEND_URL || FRONTEND_URL,
+  apiBaseUrl: API_BASE_URL,
+  frontendUrl: FRONTEND_URL,
 };
 
 export default config; 
