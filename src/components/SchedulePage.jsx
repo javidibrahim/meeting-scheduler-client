@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
-import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const SchedulePage = () => {
   const { slug } = useParams();
+  const { api } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [schedulingLink, setSchedulingLink] = useState(null);
@@ -27,8 +28,8 @@ const SchedulePage = () => {
         setLoading(true);
         setError(null);
         
-        // Fetch scheduling link data using the simplified endpoint
-        const response = await axios.get(`${API_ENDPOINTS.PUBLIC_SCHEDULE}/${slug}`);
+        // Fetch scheduling link data using the authenticated API client
+        const response = await api.get(`${API_ENDPOINTS.PUBLIC_SCHEDULE}/${slug}`);
         
         if (!response.data || response.data.error) {
           throw new Error(response.data?.error || 'Failed to fetch scheduling link');
@@ -48,8 +49,8 @@ const SchedulePage = () => {
         setFormData({
           email: '',
           linkedin: '',
-          answers: linkData.customQuestions?.map((q, index) => ({ 
-            question_id: `q${index}`, // Generate an ID for each question
+          answers: linkData.customQuestions?.map((question, index) => ({ 
+            question: question,  // Use the actual question text
             answer: '' 
           })) || []
         });
@@ -119,7 +120,7 @@ const SchedulePage = () => {
     };
     
     fetchSchedulingData();
-  }, [slug]);
+  }, [slug, api]);
   
   const computeAvailableSlots = (availability, events, durationMinutes, maxDaysInAdvance) => {
     // Create window of potential slots limited by maxDaysInAdvance
@@ -275,7 +276,7 @@ const SchedulePage = () => {
     setFormData(prev => ({
       ...prev,
       answers: prev.answers.map(a => 
-        a.question_id === questionId ? { ...a, answer: value } : a
+        a.question === questionId ? { ...a, answer: value } : a  // Match by question text
       )
     }));
   };
@@ -324,7 +325,8 @@ const SchedulePage = () => {
       
       console.log(`Booking meeting at: ${formattedDate} (${selectedSlot.start.toLocaleTimeString()})`);
       
-      const response = await axios.post(`${API_ENDPOINTS.PUBLIC_SCHEDULE}/schedule/book`, {
+      // Use the authenticated API client
+      const response = await api.post(`${API_ENDPOINTS.PUBLIC_SCHEDULE}/schedule/book`, {
         scheduling_link_id: schedulingLink._id,
         scheduled_for: formattedDate,
         duration_minutes: schedulingLink.meetingLength,
@@ -527,7 +529,7 @@ const SchedulePage = () => {
                         
                         <div className="space-y-4">
                           {schedulingLink.customQuestions.map((question, index) => {
-                            const answerObj = formData.answers.find(a => a.question_id === `q${index}`);
+                            const answerObj = formData.answers.find(a => a.question === question);
                             
                             return (
                               <div key={index}>
@@ -539,7 +541,7 @@ const SchedulePage = () => {
                                   id={`question-${index}`}
                                   required
                                   value={answerObj?.answer || ''}
-                                  onChange={(e) => handleAnswerChange(`q${index}`, e.target.value)}
+                                  onChange={(e) => handleAnswerChange(question, e.target.value)}
                                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
                               </div>

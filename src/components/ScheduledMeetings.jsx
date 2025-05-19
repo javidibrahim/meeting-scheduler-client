@@ -1,6 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '../config';
 
+// Reusable SVG Icon component
+const Icon = ({ type, className = "w-5 h-5 mr-2", viewBox = "0 0 24 24" }) => {
+  const icons = {
+    close: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />,
+    calendar: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
+    clock: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
+    link: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />,
+    check: <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+  };
+
+  return (
+    <svg className={className} fill={type === 'check' ? 'currentColor' : 'none'} viewBox={viewBox} stroke="currentColor">
+      {icons[type]}
+    </svg>
+  );
+};
+
 const ScheduledMeetings = ({ isOpen, onClose }) => {
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -143,9 +160,7 @@ const ScheduledMeetings = ({ isOpen, onClose }) => {
               onClick={onClose}
               className="text-gray-400 hover:text-gray-500"
             >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <Icon type="close" className="h-6 w-6" />
             </button>
           </div>
 
@@ -160,9 +175,7 @@ const ScheduledMeetings = ({ isOpen, onClose }) => {
                 <div className="p-4 text-red-500">{error}</div>
               ) : meetings.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
-                  <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
+                  <Icon type="calendar" className="w-12 h-12 mx-auto text-gray-400" />
                   <p className="mt-2">No meetings scheduled yet</p>
                 </div>
               ) : (
@@ -182,9 +195,7 @@ const ScheduledMeetings = ({ isOpen, onClose }) => {
                       </p>
                       {meeting.has_enrichment && (
                         <span className="inline-flex items-center mt-2 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                          <svg className="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
+                          <Icon type="check" className="mr-1 h-3 w-3" />
                           Enhanced
                         </span>
                       )}
@@ -207,29 +218,21 @@ const ScheduledMeetings = ({ isOpen, onClose }) => {
                       <h3 className="text-2xl font-semibold text-gray-800 mb-2">Meeting with {meetingDetails.client_email}</h3>
                       <div className="flex flex-wrap items-center gap-4">
                         <div className="flex items-center text-indigo-600">
-                          <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
+                          <Icon type="calendar" />
                           <span>{formatDate(meetingDetails.start_time)}</span>
                         </div>
                         <div className="flex items-center text-indigo-600">
-                          <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                          <Icon type="clock" />
                           <span>{formatTime(meetingDetails.start_time)} - {formatTime(meetingDetails.end_time)}</span>
                         </div>
                         <div className="flex items-center">
-                          <svg className="w-5 h-5 mr-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                          <Icon type="clock" className="w-5 h-5 mr-2 text-gray-600" />
                           <span className="text-gray-600">{meetingDetails.duration_minutes} minutes</span>
                         </div>
                         
                         {meetingDetails.link_details && (
                           <div className="flex items-center">
-                            <svg className="w-4 h-4 mr-1 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                            </svg>
+                            <Icon type="link" className="w-4 h-4 mr-1 text-indigo-600" />
                             <a 
                               href={`${window.location.origin}/schedule/${meetingDetails.link_details.slug}`} 
                               target="_blank"

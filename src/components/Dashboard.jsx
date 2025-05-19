@@ -88,27 +88,11 @@ const Dashboard = () => {
     }
   }, [fetchEvents]); // Only depends on fetchEvents
 
-  // Initial data fetch
+  // Check authentication and load data
   useEffect(() => {
     let mounted = true;
 
-    const loadData = async () => {
-      if (!mounted) return;
-      await fetchCalendars();
-    };
-
-    loadData();
-
-    return () => {
-      mounted = false;
-    };
-  }, []); // Empty dependency array - only run on mount
-
-  // Check authentication on mount only
-  useEffect(() => {
-    let mounted = true;
-
-    const checkAuth = async () => {
+    const checkAuthAndLoadData = async () => {
       if (!mounted) return;
 
       if (!loading && !user) {
@@ -123,16 +107,22 @@ const Dashboard = () => {
         if (!isAuthenticated && mounted) {
           console.log('Auth refresh failed, redirecting to login');
           navigate('/');
+          return;
         }
+      }
+
+      // Only fetch calendars if we have a valid user
+      if (user && mounted) {
+        await fetchCalendars();
       }
     };
     
-    checkAuth();
+    checkAuthAndLoadData();
 
     return () => {
       mounted = false;
     };
-  }, []); // Only run on mount
+  }, [user, loading, navigate, refreshAuth, fetchCalendars]); // Include all dependencies
 
   // Handle URL parameters
   useEffect(() => {
@@ -237,6 +227,18 @@ const Dashboard = () => {
                   <p className="text-gray-600">{user?.email}</p>
                 </div>
               </div>
+                            {/* Scheduled Meetings Button */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <button
+                  onClick={() => setIsScheduledMeetingsModalOpen(true)}
+                  className="w-full bg-emerald-500 text-white px-4 py-3 rounded-md hover:bg-emerald-600 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                  </svg>
+                  <span>View Scheduled Meetings</span>
+                </button>
+              </div>
 
               {/* Calendar Integration Section */}
               <div className="bg-white rounded-lg shadow p-6">
@@ -269,19 +271,6 @@ const Dashboard = () => {
 
               {/* HubSpot Connection */}
               <HubspotConnection />
-              
-              {/* Scheduled Meetings Button */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <button
-                  onClick={() => setIsScheduledMeetingsModalOpen(true)}
-                  className="w-full bg-emerald-500 text-white px-4 py-3 rounded-md hover:bg-emerald-600 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                  </svg>
-                  <span>View Scheduled Meetings</span>
-                </button>
-              </div>
             </div>
           </div>
 

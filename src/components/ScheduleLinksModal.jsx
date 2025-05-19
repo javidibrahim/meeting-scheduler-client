@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '../config';
 
+// Common styles as constants
+const truncatedTextStyle = {
+  overflow: "hidden", 
+  textOverflow: "ellipsis", 
+  whiteSpace: "nowrap"
+};
+
 const ScheduleLinksModal = ({ isOpen, onClose, onSave }) => {
   const [links, setLinks] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -174,11 +181,7 @@ const ScheduleLinksModal = ({ isOpen, onClose, onSave }) => {
                             <div style={{ maxWidth: "200px" }}>
                               <div 
                                 className="text-sm font-medium text-gray-900" 
-                                style={{ 
-                                  overflow: "hidden", 
-                                  textOverflow: "ellipsis", 
-                                  whiteSpace: "nowrap"
-                                }} 
+                                style={truncatedTextStyle} 
                                 title={link.slug}
                               >
                                 {link.slug}
@@ -189,11 +192,7 @@ const ScheduleLinksModal = ({ isOpen, onClose, onSave }) => {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center flex-grow" 
-                                  style={{ 
-                                    overflow: "hidden", 
-                                    textOverflow: "ellipsis", 
-                                    whiteSpace: "nowrap"
-                                  }} 
+                                  style={truncatedTextStyle} 
                                   title={`${window.location.origin}/schedule/${link.slug}`}
                                 >
                                   <span className="truncate">{`${window.location.origin}/schedule/${link.slug}`}</span>
@@ -254,9 +253,9 @@ const ScheduleLinksModal = ({ isOpen, onClose, onSave }) => {
           )}
         </div>
       </div>
-
+      
       {isAddModalOpen && (
-        <AddLinkModal 
+        <AddLinkModal
           isOpen={isAddModalOpen}
           onClose={handleCloseAddModal}
           onSave={handleSaveLink}
